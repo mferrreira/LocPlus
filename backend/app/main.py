@@ -1,9 +1,10 @@
 from fastapi import FastAPI
 
-from app.api.routes import router
+from app.interfaces.api.routes.auth import router as auth_router
 
 app = FastAPI(title="LocPlus API")
-app.include_router(router, prefix="/api")
+app.include_router(auth_router)
+
 
 @app.get("/", tags=["root"])
 def root() -> dict[str, str]:
