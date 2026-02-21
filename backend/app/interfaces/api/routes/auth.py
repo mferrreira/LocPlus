@@ -5,7 +5,7 @@ from app.infra.di.providers import get_login_use_case
 from app.use_cases.auth.login import LoginUseCase, InvalidCredentials
 from app.use_cases.auth.dto import LoginInput
 
-router = APIRouter("/api/auth", tags=["auth"])
+router = APIRouter(prefix="/auth", tags=["auth"])
 
 @router.post("/login", response_model=LoginResponse)
 def login(body: LoginRequest, use_case_handler: LoginUseCase = Depends(get_login_use_case)):

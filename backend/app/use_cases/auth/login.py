@@ -1,5 +1,5 @@
 from app.domain.ports.token_service import TokenServicePort
-from app.domain.ports.user_repository import UserReporitoryPort
+from app.domain.ports.user_repository import UserRepositoryPort
 from app.domain.ports.password_hasher import PasswordHasherPort
 from app.use_cases.auth.dto import LoginInput, LoginOutput
 
@@ -8,7 +8,7 @@ class InvalidCredentials(Exception):
 
 class LoginUseCase:
 
-    def __init__(self, users: UserReporitoryPort, hasher: PasswordHasherPort, tokens: TokenServicePort):
+    def __init__(self, users: UserRepositoryPort, hasher: PasswordHasherPort, tokens: TokenServicePort):
         self.users = users
         self.hasher = hasher
         self.tokens = tokens

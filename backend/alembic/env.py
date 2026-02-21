@@ -4,8 +4,7 @@ import os
 from alembic import context
 from sqlalchemy import engine_from_config, pool
 
-from app.models.base import Base
-from app.models import Machine
+from app.infra.db.models.user_model import Base
 
 config = context.config
 
