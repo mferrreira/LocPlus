@@ -1,0 +1,9 @@
+# Ignorar a pasta do ambiente virtual (muito pesada)
+venv/
+
+# Ignorar arquivos temporários do Python
+__pycache__/
+*.pyc
+
+# Ignorar o cofre de senhas (MUITO IMPORTANTE)
+.env

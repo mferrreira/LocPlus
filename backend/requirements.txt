@@ -1,0 +1,14 @@
+# Motor da API e Servidor
+fastapi
+uvicorn[standard]
+
+# Banco de Dados e Migrations (PostgreSQL)
+sqlalchemy
+psycopg[binary]
+alembic
+
+# Validação de Dados
+pydantic[email]
+
+# Auxiliares para upload de arquivos (Vistorias)
+python-multipart
