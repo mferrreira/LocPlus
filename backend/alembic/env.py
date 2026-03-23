@@ -13,7 +13,9 @@ load_dotenv()
 from app.core.database import Base
 import app.models.usuarios
 import app.models.equipamentos
-import app.models.locacoes # <--- NOVA LINHA
+import app.models.locacoes
+import app.models.enderecos
+import app.models.vistorias
 
 # Configuração padrão do Alembic
 config = context.config
