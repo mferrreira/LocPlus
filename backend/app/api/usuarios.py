@@ -1,54 +1,39 @@
-
-
-from typing import List
 from fastapi import APIRouter, Depends, HTTPException, status
 from sqlalchemy.orm import Session
-
-# Importações da nossa própria arquitetura
 from app.core.database import get_db
-from app.models.usuarios import Empresa
-from app.schemas.usuarios import EmpresaCreate, EmpresaResponse
+from app.core.security import get_password_hash
+from app.models.usuarios import Usuario
+from app.schemas.usuarios import UsuarioCreate, UsuarioResponse
 
-# Cria o "Roteador" (Um mini-FastAPI dedicado apenas a empresas)
-router = APIRouter(prefix="/empresas", tags=["Empresas (Locadoras)"])
+router = APIRouter(prefix="/usuarios", tags=["Usuários e Autenticação"])
 
-@router.post("/", response_model=EmpresaResponse, status_code=status.HTTP_201_CREATED)
-def criar_empresa(empresa: EmpresaCreate, db: Session = Depends(get_db)):
-    
-    # 1. Regra de Negócio: Impede cadastro de CNPJ duplicado
-    empresa_existente = db.query(Empresa).filter(Empresa.cnpj == empresa.cnpj).first()
-    if empresa_existente:
-        raise HTTPException(status_code=400, detail="Este CNPJ já está cadastrado no sistema.")
+@router.post("/cadastro", response_model=UsuarioResponse, status_code=status.HTTP_201_CREATED)
+def registrar_usuario(usuario: UsuarioCreate, db: Session = Depends(get_db)):
+    # 1. Trava de Segurança: O E-mail já existe?
+    db_email = db.query(Usuario).filter(Usuario.email == usuario.email).first()
+    if db_email:
+        raise HTTPException(status_code=400, detail="Este e-mail já está em uso.")
 
-    # 2. Regra de Negócio: Impede cadastro de E-mail duplicado
-    email_existente = db.query(Empresa).filter(Empresa.email == empresa.email).first()
-    if email_existente:
-        raise HTTPException(status_code=400, detail="Este E-mail já está cadastrado no sistema.")
+    # 2. Trava de Segurança: O Documento (CPF/CNPJ) já existe?
+    db_documento = db.query(Usuario).filter(Usuario.documento == usuario.documento).first()
+    if db_documento:
+        raise HTTPException(status_code=400, detail="Este CPF/CNPJ já está cadastrado.")
 
-    # 3. Transforma o Schema (Pydantic) em um Modelo de Banco de Dados (SQLAlchemy)
-    nova_empresa = Empresa(
-        razao_social=empresa.razao_social,
-        cnpj=empresa.cnpj,
-        email=empresa.email,
-        telefone=empresa.telefone
+    # 3. Preparação do Usuário (A Mágica da Criptografia acontece aqui)
+    novo_usuario = Usuario(
+        email=usuario.email,
+        senha_hash=get_password_hash(usuario.senha), # A senha original morre aqui, só o hash vai pro banco
+        objetivo=usuario.objetivo,
+        tipo_entidade=usuario.tipo_entidade,
+        nome_completo=usuario.nome_completo,
+        documento=usuario.documento,
+        telefone=usuario.telefone,
+        viu_guia_cadastro=usuario.viu_guia_cadastro
     )
 
-    # 4. Executa a gravação física no PostgreSQL
-    db.add(nova_empresa)
+    # 4. Gravação no PostgreSQL
+    db.add(novo_usuario)
     db.commit()
-    db.refresh(nova_empresa) # Atualiza a variável para pegar o ID que o banco gerou
+    db.refresh(novo_usuario)
 
-    # 5. Retorna os dados com sucesso para o Front-end
-    return nova_empresa
-    # ==========================================
-# ROTA: LISTAR TODAS AS EMPRESAS
-# ==========================================
-@router.get("/", response_model=List[EmpresaResponse])
-def listar_empresas(skip: int = 0, limit: int = 100, db: Session = Depends(get_db)):
-    
-    # 1. Vai até o banco de dados e busca as empresas
-    # Usamos skip e limit como boa prática Sênior para paginação (não travar o servidor se tivermos 10.000 empresas)
-    empresas = db.query(Empresa).offset(skip).limit(limit).all()
-    
-    # 2. Devolve a lista pronta para o Front-end
-    return empresas
+    return novo_usuario

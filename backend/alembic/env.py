@@ -12,6 +12,8 @@ load_dotenv()
 # 2. Importar a nossa Base e os nossos Modelos (MUITO IMPORTANTE para ele achar as tabelas)
 from app.core.database import Base
 import app.models.usuarios
+import app.models.empresas 
+import app.models.clientes 
 import app.models.equipamentos
 import app.models.locacoes
 import app.models.enderecos

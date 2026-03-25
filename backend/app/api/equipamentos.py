@@ -5,7 +5,7 @@ from sqlalchemy.orm import Session
 # Importações da nossa arquitetura
 from app.core.database import get_db
 from app.models.equipamentos import Equipamento
-from app.models.usuarios import Empresa
+from app.models.empresas import Empresa
 from app.schemas.equipamentos import EquipamentoCreate, EquipamentoResponse
 
 # Roteador dedicado ao Estoque

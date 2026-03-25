@@ -1,48 +1,27 @@
 from pydantic import BaseModel, EmailStr, ConfigDict
-from datetime import datetime
 from typing import Optional
+from app.models.usuarios import TipoEntidade, ObjetivoConta
 
 # ==========================================
-# SCHEMAS PARA EMPRESA (Locadora)
+# SCHEMAS PARA USUÁRIOS E AUTENTICAÇÃO
 # ==========================================
 
-# 1. Atributos base que toda Empresa tem
-class EmpresaBase(BaseModel):
-    razao_social: str
-    cnpj: str
-    email: EmailStr  # O Pydantic valida automaticamente se é um e-mail real
-    telefone: Optional[str] = None
-
-# 2. Dados exigidos no momento de CADASTRAR uma Empresa
-class EmpresaCreate(EmpresaBase):
-    pass # No futuro, se tivermos "senha", ela entra aqui (vem da internet, mas não volta)
-
-# 3. Dados que DEVOLVEMOS para o Front-end após salvar no banco
-class EmpresaResponse(EmpresaBase):
-    id: int
-    ativo: bool
-    data_cadastro: datetime
-
-    # Configuração vital: Ensina o Pydantic a ler os dados do SQLAlchemy (ORM)
-    model_config = ConfigDict(from_attributes=True)
-
-
-# ==========================================
-# SCHEMAS PARA CLIENTE (Locatário)
-# ==========================================
-
-class ClienteBase(BaseModel):
+class UsuarioBase(BaseModel):
+    email: EmailStr # O Pydantic já valida automaticamente se tem "@" e ".com"
+    objetivo: ObjetivoConta
+    tipo_entidade: TipoEntidade
     nome_completo: str
-    documento: str # Pode ser CPF ou CNPJ
-    email: EmailStr
+    documento: str # Receberá o CPF ou CNPJ
     telefone: Optional[str] = None
+    viu_guia_cadastro: bool = False
 
-class ClienteCreate(ClienteBase):
-    pass
+class UsuarioCreate(UsuarioBase):
+    senha: str # A senha viaja limpa do Front-end para a Rota (via HTTPS)
 
-class ClienteResponse(ClienteBase):
+class UsuarioResponse(UsuarioBase):
     id: int
-    ativo: bool
-    data_cadastro: datetime
+    is_ativo: bool
+    is_verificado: bool
+    # Repare que NÃO incluímos o campo "senha" aqui. Ele nunca volta para o Front-end.
 
     model_config = ConfigDict(from_attributes=True)

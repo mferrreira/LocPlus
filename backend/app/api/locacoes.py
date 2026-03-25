@@ -6,7 +6,8 @@ from sqlalchemy.orm import Session
 from app.core.database import get_db
 from app.models.locacoes import Locacao, StatusLocacao
 from app.models.equipamentos import Equipamento
-from app.models.usuarios import Cliente, Empresa
+from app.models.clientes import Cliente
+from app.models.empresas import Empresa
 from app.schemas.locacoes import LocacaoCreate, LocacaoResponse
 
 # Roteador dedicado à Operação
