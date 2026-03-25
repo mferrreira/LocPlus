@@ -1,6 +1,7 @@
 from typing import List
 from fastapi import APIRouter, Depends, HTTPException, status
 from sqlalchemy.orm import Session
+from datetime import datetime
 
 # Importações da nossa arquitetura
 from app.core.database import get_db
@@ -61,9 +62,36 @@ def criar_locacao(locacao: LocacaoCreate, db: Session = Depends(get_db)):
     return nova_locacao
 
 # ==========================================
+# MÁQUINA DE ESTADOS: ACEITE DO LOCATÁRIO
+# ==========================================
+@router.post("/{locacao_id}/aceite")
+def aceite_locatario(locacao_id: int, db: Session = Depends(get_db)):
+    locacao = db.query(Locacao).filter(Locacao.id == locacao_id).first()
+    if not locacao:
+        raise HTTPException(status_code=404, detail="Contrato não encontrado")
+        
+    locacao.status = StatusLocacao.EM_ANDAMENTO
+    locacao.data_aceite_locatario = datetime.utcnow()
+    db.commit()
+    return {"mensagem": "Aceite digital assinado. Máquina oficialmente com o locatário."}
+
+# ==========================================
+# MÁQUINA DE ESTADOS: MÁQUINA PARADA (S.O.S)
+# ==========================================
+@router.post("/{locacao_id}/maquina-parada")
+def reportar_maquina_parada(locacao_id: int, db: Session = Depends(get_db)):
+    locacao = db.query(Locacao).filter(Locacao.id == locacao_id).first()
+    if not locacao:
+        raise HTTPException(status_code=404, detail="Contrato não encontrado")
+        
+    locacao.status = StatusLocacao.MAQUINA_PARADA
+    # Todo o calculo financeiro de quebra de diária acontecerá com base nesse status no futuro
+    db.commit()
+    return {"mensagem": "Assistência notificada. Contagem de diárias pausada pelo sistema."}
+
+# ==========================================
 # LISTAR CONTRATOS E ORÇAMENTOS (GET)
 # ==========================================
 @router.get("/", response_model=List[LocacaoResponse])
 def listar_locacoes(skip: int = 0, limit: int = 100, db: Session = Depends(get_db)):
-    # Retorna o fluxo de caixa/operações
     return db.query(Locacao).offset(skip).limit(limit).all()

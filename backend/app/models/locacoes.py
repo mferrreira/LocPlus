@@ -8,6 +8,8 @@ class StatusLocacao(str, enum.Enum):
     ORCAMENTO = "orcamento"
     AGUARDANDO_ENTREGA = "aguardando_entrega"
     EM_ANDAMENTO = "em_andamento" # A máquina está na obra
+    CONTESTACAO = "contestacao"   # Cliente abriu divergência nas primeiras 12h
+    MAQUINA_PARADA = "maquina_parada" # Diárias congeladas (manutenção)
     FINALIZADO = "finalizado"     # A máquina voltou
     CANCELADO = "cancelado"
 
@@ -25,6 +27,7 @@ class Locacao(Base):
     # Controle de Tempo
     data_inicio = Column(DateTime, default=datetime.utcnow, nullable=False)
     data_fim_prevista = Column(DateTime, nullable=False)
+    data_aceite_locatario = Column(DateTime, nullable=True) # O momento do Check-in do Cliente
     data_devolucao_real = Column(DateTime, nullable=True) # Preenchido só no fim do contrato
 
     # Financeiro e Logística

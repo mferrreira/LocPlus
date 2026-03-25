@@ -1,55 +1,49 @@
 from fastapi import APIRouter, Depends, HTTPException, status, UploadFile, File, Form
 from sqlalchemy.orm import Session
-import shutil
-import os
-from uuid import uuid4 # Gerador de códigos únicos impressionantes
-
+from uuid import uuid4
 from app.core.database import get_db
+from app.core.storage import upload_file_to_minio
 from app.models.vistorias import Vistoria, TipoVistoria
 from app.models.locacoes import Locacao
 from app.schemas.vistorias import VistoriaResponse
 
-router = APIRouter(prefix="/vistorias", tags=["Vistorias e Uploads de Fotos"])
-
-# Onde as fotos vão morar no seu computador (O Python criará essa pasta automaticamente)
-UPLOAD_DIR = "uploads/vistorias"
-os.makedirs(UPLOAD_DIR, exist_ok=True)
+router = APIRouter(prefix="/vistorias", tags=["Vistorias e Inspeções Digitais"])
 
 # Atenção: Usamos Form() e File() em vez do Schema de Create padrão
 @router.post("/", response_model=VistoriaResponse, status_code=status.HTTP_201_CREATED)
 def registrar_vistoria(
     locacao_id: int = Form(...),
     tipo: TipoVistoria = Form(...),
+    horimetro_odometro: float = Form(0.0),
+    nivel_combustivel: str = Form("Cheio"),
+    check_pneus: bool = Form(True),
+    check_vidros: bool = Form(True),
+    check_lataria: bool = Form(True),
+    check_painel: bool = Form(True),
+    check_hidraulica: bool = Form(True),
     observacoes: str = Form(None),
     foto: UploadFile = File(None),
     db: Session = Depends(get_db)
 ):
-    # 1. Trava de Segurança: Este contrato de aluguel existe?
     locacao = db.query(Locacao).filter(Locacao.id == locacao_id).first()
     if not locacao:
-        raise HTTPException(status_code=404, detail="Contrato de locação não encontrado.")
+        raise HTTPException(status_code=404, detail="Contrato não encontrado.")
 
     foto_url = None
-
-    # 2. Processamento Físico da Imagem
     if foto:
-        # Pega a extensão original (.jpg, .png)
-        extensao = foto.filename.split(".")[-1]
-        # Cria um nome impossível de repetir (ex: 550e8400-e29b-41d4-a716-446655440000.jpg)
-        nome_arquivo = f"{uuid4()}.{extensao}"
-        caminho_completo = os.path.join(UPLOAD_DIR, nome_arquivo)
-        
-        # Salva a imagem no SSD
-        with open(caminho_completo, "wb") as buffer:
-            shutil.copyfileobj(foto.file, buffer)
-        
-        # Este é o texto que vai para o PostgreSQL
-        foto_url = caminho_completo
+        nome_arquivo = f"vistoria_{locacao_id}_{tipo.value}_{uuid4()}.{foto.filename.split('.')[-1]}"
+        foto_url = upload_file_to_minio(foto, nome_arquivo)
 
-    # 3. Gravação no Banco de Dados
     nova_vistoria = Vistoria(
         locacao_id=locacao_id,
         tipo=tipo,
+        horimetro_odometro=horimetro_odometro,
+        nivel_combustivel=nivel_combustivel,
+        check_pneus=check_pneus,
+        check_vidros=check_vidros,
+        check_lataria=check_lataria,
+        check_painel=check_painel,
+        check_hidraulica=check_hidraulica,
         observacoes=observacoes,
         fotos_url=foto_url
     )

@@ -53,10 +53,29 @@ services:
     environment:
       # O segredo da rede Docker: O host do banco agora é 'db', não mais 'localhost'
       - DATABASE_URL=postgresql://locplus_admin:locplus_senha_segura@db:5432/locplus_db
+      - MINIO_INTERNAL_URL=http://minio:9000
+      - MINIO_PUBLIC_URL=http://localhost:9000
+      - MINIO_ACCESS_KEY=minio_admin
+      - MINIO_SECRET_KEY=minio_senha_segura
     command: uvicorn app.main:app --host 0.0.0.0 --port 8000 --reload
     depends_on:
       - db
       - minio
+
+  # 5. Frontend React (Vite)
+  frontend:
+    build: 
+      context: ./frontend
+      dockerfile: Dockerfile
+    container_name: locplus-frontend
+    restart: always
+    ports:
+      - "5173:5173"
+    volumes:
+      - ./frontend:/app
+      - /app/node_modules # Impede que os modulos locais do Windows sobreponham os modulos do Alpine Linux instalados na build da Imagem
+    depends_on:
+      - backend
 
 # Volumes nomeados garantem a persistência dos dados
 volumes:

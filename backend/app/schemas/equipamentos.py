@@ -2,7 +2,7 @@ from pydantic import BaseModel, ConfigDict
 from typing import Optional
 
 # Importamos as regras rígidas que criamos no modelo do banco
-from app.models.equipamentos import CategoriaEquipamento, TipoCobranca
+from app.models.equipamentos import CategoriaEquipamento
 
 # ==========================================
 # SCHEMAS PARA EQUIPAMENTOS (Estoque Universal)
@@ -13,10 +13,18 @@ class EquipamentoBase(BaseModel):
     nome: str
     descricao: Optional[str] = None
     numero_serie_patrimonio: Optional[str] = None
-    valor_base_locacao: float
+    marca: Optional[str] = None
+    modelo: Optional[str] = None
+    ano_fabricacao: Optional[int] = None
     
-    # Usamos os Enums para blindar as opções aceitas
-    tipo_cobranca: TipoCobranca
+    valor_diaria: float
+    valor_semana: Optional[float] = None
+    valor_quinzena: Optional[float] = None
+    valor_mes: Optional[float] = None
+    
+    foto_visao_geral: Optional[str] = None
+    foto_painel: Optional[str] = None
+    foto_motor: Optional[str] = None
     categoria: CategoriaEquipamento
     
     quantidade_total: int = 1

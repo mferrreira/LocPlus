@@ -1,8 +1,11 @@
 from fastapi import APIRouter, Depends, HTTPException, status
+from pydantic import BaseModel
 from sqlalchemy.orm import Session
 from app.core.database import get_db
-from app.core.security import get_password_hash
-from app.models.usuarios import Usuario
+from app.core.security import get_password_hash, verify_password
+from app.models.usuarios import Usuario, ObjetivoConta
+from app.models.clientes import Cliente
+from app.models.empresas import Empresa
 from app.schemas.usuarios import UsuarioCreate, UsuarioResponse
 
 router = APIRouter(prefix="/usuarios", tags=["Usuários e Autenticação"])
@@ -27,13 +30,48 @@ def registrar_usuario(usuario: UsuarioCreate, db: Session = Depends(get_db)):
         tipo_entidade=usuario.tipo_entidade,
         nome_completo=usuario.nome_completo,
         documento=usuario.documento,
-        telefone=usuario.telefone,
+        telefone_celular=usuario.telefone_celular,
+        telefone_fixo=usuario.telefone_fixo,
+        rg=usuario.rg,
+        data_nascimento=usuario.data_nascimento,
+        razao_social=usuario.razao_social,
+        nome_fantasia=usuario.nome_fantasia,
+        inscricao_estadual=usuario.inscricao_estadual,
         viu_guia_cadastro=usuario.viu_guia_cadastro
     )
 
-    # 4. Gravação no PostgreSQL
+    # 4. Gravação Base
     db.add(novo_usuario)
     db.commit()
     db.refresh(novo_usuario)
 
+    # 5. Criar Perfil de Relacionamento (Gatilho automático)
+    if novo_usuario.objetivo == ObjetivoConta.LOCADOR:
+        novo_perfil = Empresa(usuario_id=novo_usuario.id)
+        db.add(novo_perfil)
+    else:
+        novo_perfil = Cliente(usuario_id=novo_usuario.id)
+        db.add(novo_perfil)
+        
+    db.commit()
+
     return novo_usuario
+
+
+class UsuarioLogin(BaseModel):
+    email: str
+    senha: str
+
+@router.post("/login", status_code=status.HTTP_200_OK)
+def login_usuario(credenciais: UsuarioLogin, db: Session = Depends(get_db)):
+    usuario = db.query(Usuario).filter(Usuario.email == credenciais.email).first()
+    if not usuario or not verify_password(credenciais.senha, usuario.senha_hash):
+        raise HTTPException(status_code=401, detail="E-mail ou senha incorretos.")
+    
+    # Como usamos localStorage na fundação inicial, o Token é um stub com a Role de interface
+    return {
+        "access_token": str(usuario.id),
+        "tipo_entidade": usuario.tipo_entidade,
+        "objetivo": usuario.objetivo,
+        "nome": usuario.nome_completo
+    }

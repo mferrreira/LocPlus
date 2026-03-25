@@ -1,4 +1,4 @@
-from sqlalchemy import Column, Integer, String, Boolean, Enum
+from sqlalchemy import Column, Integer, String, Boolean, Enum, Date
 import enum
 from app.core.database import Base
 
@@ -27,7 +27,17 @@ class Usuario(Base):
     # Dados Base (Comuns para PF e o Responsável da PJ)
     nome_completo = Column(String, nullable=False)
     documento = Column(String, unique=True, index=True, nullable=False) # CPF ou CNPJ
-    telefone = Column(String, nullable=True)
+    telefone_celular = Column(String, nullable=True)
+    telefone_fixo = Column(String, nullable=True)
+    
+    # Campos Específicos PF
+    rg = Column(String, nullable=True)
+    data_nascimento = Column(Date, nullable=True)
+    
+    # Campos Específicos PJ
+    razao_social = Column(String, nullable=True)
+    nome_fantasia = Column(String, nullable=True)
+    inscricao_estadual = Column(String, nullable=True)
     
     # Controle de Sistema e Segurança
     is_ativo = Column(Boolean, default=True)

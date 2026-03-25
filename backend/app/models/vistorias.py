@@ -1,4 +1,4 @@
-from sqlalchemy import Column, Integer, String, ForeignKey, Enum, DateTime
+from sqlalchemy import Column, Integer, String, Float, Boolean, ForeignKey, Enum, DateTime
 from datetime import datetime
 import enum
 from app.core.database import Base
@@ -19,7 +19,18 @@ class Vistoria(Base):
     tipo = Column(Enum(TipoVistoria), nullable=False)
     data_vistoria = Column(DateTime, default=datetime.utcnow)
     
-    # Campo longo para o mecânico relatar arranhões, nível de combustível, etc.
+    # Métricas Quantitativas Obrigatórias (Passos do PRD)
+    horimetro_odometro = Column(Float, nullable=True)
+    nivel_combustivel = Column(String, nullable=True)
+    
+    # Checklist Físico Rápido (Booleans)
+    check_pneus = Column(Boolean, default=True)
+    check_vidros = Column(Boolean, default=True)
+    check_lataria = Column(Boolean, default=True)
+    check_painel = Column(Boolean, default=True)
+    check_hidraulica = Column(Boolean, default=True)
+    
+    # Campo longo para o mecânico relatar arranhões, etc.
     observacoes = Column(String, nullable=True) 
     
     # Os caminhos (URLs) onde os arquivos PDF ou JPG ficarão salvos no servidor
