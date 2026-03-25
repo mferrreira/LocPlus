@@ -8,14 +8,14 @@ services:
     restart: always
     environment:
       POSTGRES_USER: locplus_admin
-      POSTGRES_PASSWORD: locplus_senha_segura # Em produção, usaremos variáveis de ambiente (.env)
+      POSTGRES_PASSWORD: locplus_senha_segura # Em produção, usaremos o .env
       POSTGRES_DB: locplus_db
     ports:
       - "5432:5432"
     volumes:
       - locplus_postgres_data:/var/lib/postgresql/data
 
-  # 2. Armazenamento de Arquivos/Vistorias (MinIO - Alternativa local ao AWS S3)
+  # 2. Armazenamento de Arquivos/Vistorias (MinIO)
   minio:
     image: minio/minio
     container_name: locplus-minio
@@ -25,12 +25,12 @@ services:
       MINIO_ROOT_PASSWORD: minio_senha_segura
     command: server /data --console-address ":9001"
     ports:
-      - "9000:9000" # Porta da API (onde nosso backend em Python vai se conectar)
-      - "9001:9001" # Porta do Painel Visual (onde você pode acessar pelo navegador)
+      - "9000:9000" 
+      - "9001:9001" 
     volumes:
       - locplus_minio_data:/data
 
-  # 3. Gerenciador Visual do Banco de Dados (Bônus para facilitar o desenvolvimento)
+  # 3. Gerenciador Visual do Banco de Dados
   adminer:
     image: adminer
     container_name: locplus-adminer
@@ -40,7 +40,25 @@ services:
     depends_on:
       - db
 
-# Volumes nomeados garantem que você não perca os dados se o Docker for reiniciado
+  # 4. Backend API (FastAPI / Uvicorn)
+  backend:
+    build: 
+      context: ./backend # Aponta para a pasta onde vai ficar o Dockerfile
+    container_name: locplus-backend
+    restart: always
+    ports:
+      - "8000:8000"
+    volumes:
+      - ./backend:/app # Sincroniza o seu código em tempo real (Hot Reload no Docker)
+    environment:
+      # O segredo da rede Docker: O host do banco agora é 'db', não mais 'localhost'
+      - DATABASE_URL=postgresql://locplus_admin:locplus_senha_segura@db:5432/locplus_db
+    command: uvicorn app.main:app --host 0.0.0.0 --port 8000 --reload
+    depends_on:
+      - db
+      - minio
+
+# Volumes nomeados garantem a persistência dos dados
 volumes:
   locplus_postgres_data:
   locplus_minio_data:
