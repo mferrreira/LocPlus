@@ -9,6 +9,7 @@ from app.models.equipamentos import CategoriaEquipamento
 from app.core.database import get_db
 from app.models.equipamentos import Equipamento
 from app.models.empresas import Empresa
+from app.api.deps import get_current_tenant, verificar_limite_maquinas
 from app.schemas.equipamentos import EquipamentoCreate, EquipamentoResponse
 
 # Roteador dedicado ao Estoque
@@ -18,18 +19,20 @@ router = APIRouter(prefix="/equipamentos", tags=["Estoque e Máquinas"])
 # CADASTRAR NOVO EQUIPAMENTO (POST)
 # ==========================================
 @router.post("/", response_model=EquipamentoResponse, status_code=status.HTTP_201_CREATED)
-def cadastrar_equipamento(equipamento: EquipamentoCreate, db: Session = Depends(get_db)):
-    
-    # Validação de Chave Estrangeira: A empresa informada realmente existe?
-    empresa_dona = db.query(Empresa).filter(Empresa.id == equipamento.empresa_id).first()
-    if not empresa_dona:
-        raise HTTPException(status_code=404, detail="A Empresa (Locadora) informada não existe no sistema.")
-        
-    # Regra: Se o item tiver um número de série, ele não pode ser duplicado
+def cadastrar_equipamento(
+    equipamento: EquipamentoCreate, 
+    db: Session = Depends(get_db),
+    current_tenant: Empresa = Depends(get_current_tenant),
+    limite_valido: bool = Depends(verificar_limite_maquinas)
+):
+    # Regra: Se o item tiver um número de série, ele não pode ser duplicado dentro da locadora
     if equipamento.numero_serie_patrimonio:
-        serie_existente = db.query(Equipamento).filter(Equipamento.numero_serie_patrimonio == equipamento.numero_serie_patrimonio).first()
+        serie_existente = db.query(Equipamento).filter(
+            Equipamento.numero_serie_patrimonio == equipamento.numero_serie_patrimonio,
+            Equipamento.empresa_id == current_tenant.id
+        ).first()
         if serie_existente:
-            raise HTTPException(status_code=400, detail="Este Número de Série/Patrimônio já está cadastrado.")
+            raise HTTPException(status_code=400, detail="Este Número de Série/Patrimônio já está cadastrado na sua frota.")
 
     # Converte o Schema para o Modelo do Banco
     novo_equipamento = Equipamento(
@@ -48,11 +51,10 @@ def cadastrar_equipamento(equipamento: EquipamentoCreate, db: Session = Depends(
         foto_motor=equipamento.foto_motor,
         categoria=equipamento.categoria,
         quantidade_total=equipamento.quantidade_total,
-        quantidade_disponivel=equipamento.quantidade_total, # Na hora da compra, tudo está disponível
-        empresa_id=equipamento.empresa_id
+        quantidade_disponivel=equipamento.quantidade_total,
+        empresa_id=current_tenant.id # Override: Ignora o payload e usa o Contexto Seguro
     )
 
-    # Gravação física no banco de dados
     db.add(novo_equipamento)
     db.commit()
     db.refresh(novo_equipamento)
@@ -67,14 +69,18 @@ def upload_fotos_equipamento(
     equipamento_id: int, 
     tipo_foto: str, # 'visao_geral', 'painel', 'motor'
     file: UploadFile = File(...), 
-    db: Session = Depends(get_db)
+    db: Session = Depends(get_db),
+    current_tenant: Empresa = Depends(get_current_tenant)
 ):
-    equipamento = db.query(Equipamento).filter(Equipamento.id == equipamento_id).first()
+    equipamento = db.query(Equipamento).filter(
+        Equipamento.id == equipamento_id, 
+        Equipamento.empresa_id == current_tenant.id
+    ).first()
     if not equipamento:
         raise HTTPException(status_code=404, detail="Equipamento não encontrado")
         
-    # Gera o nome de arquivo seguro pro S3
-    nome_arquivo = f"equipamento_{equipamento_id}_{tipo_foto}_{file.filename}"
+    # Gera o nome de arquivo seguro pro S3 incluindo tenant_id para segregação estrutural
+    nome_arquivo = f"{current_tenant.id}/equipamentos/{equipamento_id}_{tipo_foto}_{file.filename}"
     
     # Envia pro bucket MinIO
     s3_url = upload_file_to_minio(file, nome_arquivo)
@@ -98,8 +104,15 @@ def upload_fotos_equipamento(
 # LISTAR ESTOQUE AVANÇADO E FILTROS (GET)
 # ==========================================
 @router.get("/{equipamento_id}", response_model=EquipamentoResponse)
-def buscar_equipamento(equipamento_id: int, db: Session = Depends(get_db)):
-    eq = db.query(Equipamento).filter(Equipamento.id == equipamento_id).first()
+def buscar_equipamento(
+    equipamento_id: int, 
+    db: Session = Depends(get_db),
+    current_tenant: Empresa = Depends(get_current_tenant)
+):
+    eq = db.query(Equipamento).filter(
+        Equipamento.id == equipamento_id,
+        Equipamento.empresa_id == current_tenant.id
+    ).first()
     if not eq:
         raise HTTPException(status_code=404, detail="Máquina inativa ou não encontrada.")
     return eq
@@ -113,10 +126,11 @@ def listar_equipamentos(
     ordenar_por: Optional[str] = Query(None, description="'menor_preco' ou 'maior_preco'"),
     skip: int = 0, 
     limit: int = 100, 
-    db: Session = Depends(get_db)
+    db: Session = Depends(get_db),
+    current_tenant: Empresa = Depends(get_current_tenant)
 ):
-    # 1. Inicia a Factory de Query do SQLAlchemy
-    query = db.query(Equipamento)
+    # 1. Inicia a Factory de Query do SQLAlchemy escopada ao Tenant
+    query = db.query(Equipamento).filter(Equipamento.empresa_id == current_tenant.id)
     
     # 2. Busca Híbrida (Passo 6.1)
     if busca:

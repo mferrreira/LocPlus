@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react'
-import { api } from '../services/api'
+import api from '../services/api'
 import EquipamentoCard from '../components/EquipamentoCard'
 import { Search, Filter } from 'lucide-react'
 

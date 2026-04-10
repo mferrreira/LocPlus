@@ -3,9 +3,9 @@ import Navbar from './components/Navbar'
 import Home from './pages/Home'
 import Login from './pages/Login'
 import Cadastro from './pages/Cadastro'
-import CadastroMaquina from './pages/CadastroMaquina'
-import Vistoria from './pages/Vistoria'
-import EquipamentoDetalhes from './pages/EquipamentoDetalhes'
+import Catalogo from './pages/Catalogo'
+import Dashboard from './pages/Dashboard'
+import { PrivateRoute } from './components/PrivateRoute'
 
 function App() {
   return (
@@ -16,9 +16,8 @@ function App() {
           <Route path="/" element={<Home />} />
           <Route path="/login" element={<Login />} />
           <Route path="/cadastro" element={<Cadastro />} />
-          <Route path="/add-maquina" element={<CadastroMaquina />} />
-          <Route path="/terminal-vistoria" element={<Vistoria />} />
-          <Route path="/equipamentos/:id" element={<EquipamentoDetalhes />} />
+          <Route path="/catalogo" element={<Catalogo />} />
+          <Route path="/dashboard" element={<PrivateRoute><Dashboard /></PrivateRoute>} />
         </Routes>
       </main>
     </div>

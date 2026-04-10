@@ -1,20 +1,20 @@
-from sqlalchemy import Column, Integer, String, ForeignKey, Boolean
+from sqlalchemy import Column, Integer, String, Boolean, ForeignKey, Enum
+from sqlalchemy.orm import relationship
+import enum
 from app.core.database import Base
+
+class TipoEndereco(str, enum.Enum):
+    SEDE = "sede"
+    GALPAO = "galpao"
+    CANTEIRO_OBRAS = "canteiro_obras"
+    RESIDENCIAL = "residencial"
 
 class Endereco(Base):
     __tablename__ = "enderecos"
 
     id = Column(Integer, primary_key=True, index=True)
+    usuario_id = Column(Integer, ForeignKey("usuarios.id"), nullable=False)
     
-    # Relacionamentos Múltiplos
-    # Um endereço pode pertencer a um Cliente (Locatário) ou a uma Empresa (Matriz Locadora)
-    cliente_id = Column(Integer, ForeignKey("clientes.id"), nullable=True)
-    empresa_id = Column(Integer, ForeignKey("empresas.id"), nullable=True)
-
-    # Identificação do Local
-    apelido = Column(String, nullable=False) # Ex: "Obra Zona Sul", "Sede Matriz"
-    
-    # Dados Logísticos para Cálculo de Frete
     cep = Column(String, nullable=False)
     logradouro = Column(String, nullable=False)
     numero = Column(String, nullable=False)
@@ -22,6 +22,8 @@ class Endereco(Base):
     bairro = Column(String, nullable=False)
     cidade = Column(String, nullable=False)
     estado = Column(String, nullable=False)
+    
+    tipo = Column(Enum(TipoEndereco), default=TipoEndereco.SEDE)
+    is_padrao = Column(Boolean, default=False)
 
-    # Inteligência de Sistema
-    is_principal = Column(Boolean, default=False) # Define qual é o endereço de faturamento padrão
+    usuario = relationship("Usuario", back_populates="enderecos")

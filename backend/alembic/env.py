@@ -18,6 +18,8 @@ import app.models.equipamentos
 import app.models.locacoes
 import app.models.enderecos
 import app.models.vistorias
+import app.models.documentos_kyc
+import app.models.representacao_b2b
 
 # Configuração padrão do Alembic
 config = context.config

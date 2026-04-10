@@ -15,9 +15,9 @@ class LocacaoBase(BaseModel):
     cliente_id: int
     equipamento_id: int
     
-    # Datas e Valores
+    # Datas
+    data_inicio: Optional[datetime] = None
     data_fim_prevista: datetime
-    valor_total: float
     
     # Logística e Funcionalidades Avançadas
     endereco_entrega: Optional[str] = None
@@ -33,6 +33,7 @@ class LocacaoCreate(LocacaoBase):
 # 3. Dados que DEVOLVEMOS para o Front-end após salvar no banco
 class LocacaoResponse(LocacaoBase):
     id: int
+    valor_total: float
     data_inicio: datetime
     data_devolucao_real: Optional[datetime] = None
     assinatura_digital_url: Optional[str] = None

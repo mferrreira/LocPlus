@@ -1,8 +1,8 @@
-"""Initial_LocPlus_V1
+"""V2_Initial
 
-Revision ID: 4c3067cd57db
+Revision ID: bf1e7e2b3df9
 Revises: 
-Create Date: 2026-03-25 21:59:43.024436
+Create Date: 2026-03-26 00:07:29.292578
 
 """
 from typing import Sequence, Union
@@ -12,7 +12,7 @@ import sqlalchemy as sa
 
 
 # revision identifiers, used by Alembic.
-revision: str = '4c3067cd57db'
+revision: str = 'bf1e7e2b3df9'
 down_revision: Union[str, Sequence[str], None] = None
 branch_labels: Union[str, Sequence[str], None] = None
 depends_on: Union[str, Sequence[str], None] = None
@@ -38,6 +38,8 @@ def upgrade() -> None:
     sa.Column('inscricao_estadual', sa.String(), nullable=True),
     sa.Column('is_ativo', sa.Boolean(), nullable=True),
     sa.Column('is_verificado', sa.Boolean(), nullable=True),
+    sa.Column('is_2fa_enabled', sa.Boolean(), nullable=True),
+    sa.Column('aceitou_termos_uso', sa.Boolean(), nullable=True),
     sa.Column('viu_guia_cadastro', sa.Boolean(), nullable=True),
     sa.PrimaryKeyConstraint('id')
     )
@@ -52,6 +54,17 @@ def upgrade() -> None:
     sa.UniqueConstraint('usuario_id')
     )
     op.create_index(op.f('ix_clientes_id'), 'clientes', ['id'], unique=False)
+    op.create_table('documentos_kyc',
+    sa.Column('id', sa.Integer(), nullable=False),
+    sa.Column('usuario_id', sa.Integer(), nullable=False),
+    sa.Column('tipo_documento', sa.Enum('CNH', 'RG', 'CONTRATO_SOCIAL', 'COMPROVANTE_RESIDENCIA', name='tipodocumento'), nullable=False),
+    sa.Column('minio_s3_url', sa.String(), nullable=False),
+    sa.Column('status', sa.Enum('PENDENTE', 'APROVADO', 'REJEITADO', name='statusverificacao'), nullable=True),
+    sa.Column('data_envio', sa.DateTime(), nullable=True),
+    sa.ForeignKeyConstraint(['usuario_id'], ['usuarios.id'], ),
+    sa.PrimaryKeyConstraint('id')
+    )
+    op.create_index(op.f('ix_documentos_kyc_id'), 'documentos_kyc', ['id'], unique=False)
     op.create_table('empresas',
     sa.Column('id', sa.Integer(), nullable=False),
     sa.Column('usuario_id', sa.Integer(), nullable=False),
@@ -62,9 +75,7 @@ def upgrade() -> None:
     op.create_index(op.f('ix_empresas_id'), 'empresas', ['id'], unique=False)
     op.create_table('enderecos',
     sa.Column('id', sa.Integer(), nullable=False),
-    sa.Column('cliente_id', sa.Integer(), nullable=True),
-    sa.Column('empresa_id', sa.Integer(), nullable=True),
-    sa.Column('apelido', sa.String(), nullable=False),
+    sa.Column('usuario_id', sa.Integer(), nullable=False),
     sa.Column('cep', sa.String(), nullable=False),
     sa.Column('logradouro', sa.String(), nullable=False),
     sa.Column('numero', sa.String(), nullable=False),
@@ -72,12 +83,24 @@ def upgrade() -> None:
     sa.Column('bairro', sa.String(), nullable=False),
     sa.Column('cidade', sa.String(), nullable=False),
     sa.Column('estado', sa.String(), nullable=False),
-    sa.Column('is_principal', sa.Boolean(), nullable=True),
-    sa.ForeignKeyConstraint(['cliente_id'], ['clientes.id'], ),
-    sa.ForeignKeyConstraint(['empresa_id'], ['empresas.id'], ),
+    sa.Column('tipo', sa.Enum('SEDE', 'GALPAO', 'CANTEIRO_OBRAS', 'RESIDENCIAL', name='tipoendereco'), nullable=True),
+    sa.Column('is_padrao', sa.Boolean(), nullable=True),
+    sa.ForeignKeyConstraint(['usuario_id'], ['usuarios.id'], ),
     sa.PrimaryKeyConstraint('id')
     )
     op.create_index(op.f('ix_enderecos_id'), 'enderecos', ['id'], unique=False)
+    op.create_table('representacoes_b2b',
+    sa.Column('id', sa.Integer(), nullable=False),
+    sa.Column('representante_usuario_id', sa.Integer(), nullable=False),
+    sa.Column('cnpj_cliente_final', sa.String(), nullable=False),
+    sa.Column('razao_social_cliente_final', sa.String(), nullable=False),
+    sa.Column('comprovante_autorizacao_url', sa.String(), nullable=False),
+    sa.Column('status_aprovacao', sa.Enum('ATIVA', 'PENDENTE', 'REVOGADA', name='statusrepresentacao'), nullable=True),
+    sa.ForeignKeyConstraint(['representante_usuario_id'], ['usuarios.id'], ),
+    sa.PrimaryKeyConstraint('id')
+    )
+    op.create_index(op.f('ix_representacoes_b2b_cnpj_cliente_final'), 'representacoes_b2b', ['cnpj_cliente_final'], unique=False)
+    op.create_index(op.f('ix_representacoes_b2b_id'), 'representacoes_b2b', ['id'], unique=False)
     op.create_table('equipamentos',
     sa.Column('id', sa.Integer(), nullable=False),
     sa.Column('nome', sa.String(), nullable=False),
@@ -157,10 +180,15 @@ def downgrade() -> None:
     op.drop_index(op.f('ix_equipamentos_nome'), table_name='equipamentos')
     op.drop_index(op.f('ix_equipamentos_id'), table_name='equipamentos')
     op.drop_table('equipamentos')
+    op.drop_index(op.f('ix_representacoes_b2b_id'), table_name='representacoes_b2b')
+    op.drop_index(op.f('ix_representacoes_b2b_cnpj_cliente_final'), table_name='representacoes_b2b')
+    op.drop_table('representacoes_b2b')
     op.drop_index(op.f('ix_enderecos_id'), table_name='enderecos')
     op.drop_table('enderecos')
     op.drop_index(op.f('ix_empresas_id'), table_name='empresas')
     op.drop_table('empresas')
+    op.drop_index(op.f('ix_documentos_kyc_id'), table_name='documentos_kyc')
+    op.drop_table('documentos_kyc')
     op.drop_index(op.f('ix_clientes_id'), table_name='clientes')
     op.drop_table('clientes')
     op.drop_index(op.f('ix_usuarios_id'), table_name='usuarios')

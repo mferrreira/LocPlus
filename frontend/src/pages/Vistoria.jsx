@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { api } from '../services/api'
+import api from '../services/api'
 import { Camera, Upload, ShieldCheck } from 'lucide-react'
 
 export default function Vistoria() {

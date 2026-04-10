@@ -2,14 +2,11 @@ from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.staticfiles import StaticFiles
 
+# Injeção Crítica: Carrega todas as instâncias do DB no ambiente (Pre-Requisito SQLAlchemy)
+import app.models  # Força a inicialização do __init__.py!
+
 # Importamos os roteadores
-from app.api import usuarios
-from app.api import empresas
-from app.api import clientes
-from app.api import equipamentos
-from app.api import locacoes
-from app.api import enderecos
-from app.api import vistorias
+from app.api import usuarios, empresas, clientes, equipamentos, locacoes, vistorias, enderecos, kyc, catalogo
 
 app = FastAPI(
     title="LocPlus API",
@@ -41,5 +38,7 @@ app.include_router(empresas.router)
 app.include_router(clientes.router)
 app.include_router(equipamentos.router)
 app.include_router(locacoes.router)
-app.include_router(enderecos.router)
 app.include_router(vistorias.router)
+app.include_router(enderecos.router)
+app.include_router(kyc.router)
+app.include_router(catalogo.router)

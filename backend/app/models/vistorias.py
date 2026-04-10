@@ -13,6 +13,9 @@ class Vistoria(Base):
 
     id = Column(Integer, primary_key=True, index=True)
     
+    # Hierarquia SaaS: A Locadora (Obrigatório para blindagem rápida de queries)
+    empresa_id = Column(Integer, ForeignKey("empresas.id"), nullable=False)
+
     # A Chave de Ouro: A qual contrato esta vistoria pertence?
     locacao_id = Column(Integer, ForeignKey("locacoes.id"), nullable=False)
     

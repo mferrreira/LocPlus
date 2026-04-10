@@ -9,6 +9,9 @@ from app.models.usuarios import Usuario, ObjetivoConta, TipoEntidade
 from app.models.empresas import Empresa
 from app.models.clientes import Cliente
 from app.models.equipamentos import Equipamento, CategoriaEquipamento
+from app.models.enderecos import Endereco
+from app.models.documentos_kyc import DocumentoKYC
+from app.models.representacao_b2b import RepresentacaoB2B
 from app.core.security import get_password_hash
 
 def seed():

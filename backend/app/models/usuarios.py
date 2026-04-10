@@ -1,4 +1,5 @@
-from sqlalchemy import Column, Integer, String, Boolean, Enum, Date
+from sqlalchemy import Column, Integer, String, Boolean, Enum, Date, ForeignKey
+from sqlalchemy.orm import relationship
 import enum
 from app.core.database import Base
 
@@ -34,14 +35,21 @@ class Usuario(Base):
     rg = Column(String, nullable=True)
     data_nascimento = Column(Date, nullable=True)
     
-    # Campos Específicos PJ
-    razao_social = Column(String, nullable=True)
-    nome_fantasia = Column(String, nullable=True)
-    inscricao_estadual = Column(String, nullable=True)
-    
     # Controle de Sistema e Segurança
     is_ativo = Column(Boolean, default=True)
     is_verificado = Column(Boolean, default=False) # Para validação de E-mail/WhatsApp no futuro
+    is_2fa_enabled = Column(Boolean, default=False)
+    aceitou_termos_uso = Column(Boolean, default=False)
     
     # A Flag de UX que discutimos para o Product Tour
     viu_guia_cadastro = Column(Boolean, default=False)
+
+    # SaaS Roles e Hierarquia de Tenant
+    empresa_id = Column(Integer, ForeignKey("empresas.id"), nullable=True) # Nullable porque Clientes(Locatários) não pertencem a um Tenant específico
+    role = Column(String, default="admin") # "admin", "operador" -> Poderíamos usar Enum depois
+
+    # V2 Relacionamentos
+    empresa = relationship("Empresa", back_populates="usuarios")
+    enderecos = relationship("Endereco", back_populates="usuario", cascade="all, delete-orphan")
+    documentos_kyc = relationship("DocumentoKYC", back_populates="usuario", cascade="all, delete-orphan")
+    representacoes = relationship("RepresentacaoB2B", foreign_keys="RepresentacaoB2B.representante_usuario_id", back_populates="representante", cascade="all, delete-orphan")

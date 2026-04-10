@@ -44,3 +44,16 @@ class EquipamentoResponse(EquipamentoBase):
 
     # Configuração vital: Ensina o Pydantic a ler os dados do SQLAlchemy (ORM)
     model_config = ConfigDict(from_attributes=True)
+
+# ==========================================
+# SCHEMAS PARA O CATÁLOGO (Marketplace Público)
+# ==========================================
+class EmpresaCatalogo(BaseModel):
+    id: int
+    nome_fantasia: Optional[str] = None
+    avaliacao: Optional[float] = 5.0
+    model_config = ConfigDict(from_attributes=True)
+
+class CatalogoEquipamentoResponse(EquipamentoResponse):
+    empresa: EmpresaCatalogo
+    model_config = ConfigDict(from_attributes=True)

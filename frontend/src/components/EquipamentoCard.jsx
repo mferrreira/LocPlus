@@ -42,9 +42,9 @@ export default function EquipamentoCard({ equipamento }) {
               {new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(equipamento.valor_diaria)}
             </p>
           </div>
-          <Link to={`/equipamentos/${equipamento.id}`} className="bg-white border-2 border-blue-600 text-blue-600 hover:bg-blue-50 px-4 py-2 rounded-lg transition-colors text-sm font-bold shadow-sm">
-            Detalhes
-          </Link>
+          <span className="bg-gray-100 border border-gray-300 text-gray-400 px-4 py-2 rounded-lg text-sm font-bold shadow-sm cursor-not-allowed">
+            Em Breve
+          </span>
         </div>
       </div>
     </div>

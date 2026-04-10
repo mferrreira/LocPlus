@@ -1,4 +1,5 @@
 from sqlalchemy import Column, Integer, String, Float, ForeignKey, Enum, Boolean
+from sqlalchemy.orm import relationship
 import enum
 from app.core.database import Base
 
@@ -53,3 +54,6 @@ class Equipamento(Base):
 
     # Chave Estrangeira: A qual Locadora este equipamento pertence?
     empresa_id = Column(Integer, ForeignKey("empresas.id"), nullable=False)
+    
+    # O Pydantic só consegue fazer JoinedLoad porque instruimos o SQLAlchemy aqui!
+    empresa = relationship("Empresa", backref="equipamentos")
