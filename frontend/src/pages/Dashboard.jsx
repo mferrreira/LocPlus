@@ -3,7 +3,7 @@ import api from '../services/api';
 import { useAuth } from '../contexts/AuthContext';
 import { PackageOpen, Activity, AlertCircle, PlusCircle, CheckCircle2 } from 'lucide-react';
 import ModalCadastroMaquina from '../components/ModalCadastroMaquina';
-import ModalDevolucao from '../components/ModalDevolucao';
+import ModalVistoria from '../components/ModalVistoria';
 
 export default function Dashboard() {
   const { user } = useAuth();
@@ -243,7 +243,7 @@ export default function Dashboard() {
         onSuccess={fetchData} 
       />
 
-      <ModalDevolucao 
+      <ModalVistoria 
         isOpen={isModalDevolucaoOpen} 
         onClose={() => setIsModalDevolucaoOpen(false)} 
         locacao={selectedLocacao}

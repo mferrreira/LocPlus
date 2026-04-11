@@ -5,6 +5,7 @@ import Login from './pages/Login'
 import Cadastro from './pages/Cadastro'
 import Catalogo from './pages/Catalogo'
 import Dashboard from './pages/Dashboard'
+import MinhasLocacoes from './pages/MinhasLocacoes'
 import { PrivateRoute } from './components/PrivateRoute'
 
 function App() {
@@ -18,6 +19,7 @@ function App() {
           <Route path="/cadastro" element={<Cadastro />} />
           <Route path="/catalogo" element={<Catalogo />} />
           <Route path="/dashboard" element={<PrivateRoute><Dashboard /></PrivateRoute>} />
+          <Route path="/minhas-locacoes" element={<PrivateRoute><MinhasLocacoes /></PrivateRoute>} />
         </Routes>
       </main>
     </div>

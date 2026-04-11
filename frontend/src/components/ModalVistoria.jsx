@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import { X, UploadCloud, CheckCircle2, Factory } from 'lucide-react';
 import api from '../services/api';
 
-export default function ModalDevolucao({ isOpen, onClose, locacao, onSuccess }) {
+export default function ModalVistoria({ isOpen, onClose, locacao, onSuccess }) {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
   
